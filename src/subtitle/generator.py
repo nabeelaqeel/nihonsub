@@ -65,7 +65,7 @@ def write_subtitles(
     else:
         raise ValueError(f"Unsupported format: {fmt}")
 
-    if output_path.suffix.lstrip(".") != fmt:
+    if output_path.suffix.lstrip(".").lower() != fmt:
         output_path = output_path.with_suffix(f".{fmt}")
 
     output_path.write_text(content, encoding="utf-8")

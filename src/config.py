@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     vad_min_speech_duration_ms: int = 250
     vad_min_silence_duration_ms: int = 500
 
-    model_config = {"env_prefix": "", "env_file": ".env", "extra": "ignore"}
+    model_config = SettingsConfigDict(env_prefix="", env_file=".env", extra="ignore")
 
 
 settings = Settings()

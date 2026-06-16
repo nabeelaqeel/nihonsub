@@ -1,6 +1,5 @@
 import queue
 import time
-import signal
 from pathlib import Path
 from datetime import datetime
 

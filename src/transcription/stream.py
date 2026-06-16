@@ -90,6 +90,7 @@ class LiveStream:
         self.running = False
         self.segment_id = 0
         self.current_rms: float = 0.0
+        self._rms_lock = threading.Lock()
 
         self._vad_thread: threading.Thread | None = None
         self._worker_thread: threading.Thread | None = None
@@ -107,7 +108,8 @@ class LiveStream:
         self.running = False
 
     def push_audio(self, chunk: np.ndarray):
-        self.current_rms = np.sqrt(np.mean(chunk ** 2))
+        with self._rms_lock:
+            self.current_rms = np.sqrt(np.mean(chunk ** 2))
         self.vad_queue.put(chunk)
 
     def _vad_loop(self):
