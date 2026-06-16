@@ -68,13 +68,15 @@ python -m src listen --help
 ### How it works
 
 1. **Detects** your system's audio loopback device (platform-specific)
-2. **Spawns** `ffmpeg` to capture 16kHz mono f32le audio from the loopback
+2. **Captures** 16kHz mono f32le audio (ffmpeg or sounddevice depending on platform)
 3. **Runs** `silero-vad` on the stream to detect speech segments
 4. **Transcribes** each segment with `faster-whisper` in a background thread
-5. **Displays** results in a live rich terminal window
+5. **Displays** results in a live rich terminal window with audio level meter
 6. **Appends** completed segments to the `.srt` file in real-time
 
 Press **Ctrl+C** to stop. A session summary is printed on exit.
+
+See [features/live-listen.md](features/live-listen.md) for detailed architecture and platform notes.
 
 ### Platform Setup
 

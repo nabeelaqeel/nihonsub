@@ -130,3 +130,8 @@ If you don't need the mixing features of VoiceMeeter, [VB-Cable](https://vb-audi
 4. **Downside**: You won't hear audio (CABLE is purely virtual, no speaker output)
 
 To hear audio with VB-Cable, use Windows **Sound Control Panel** → **Recording** tab → **Stereo Mix** (if available) instead.
+
+---
+
+**Introduced in:** v0.2 (`feat/windows-support` branch)  
+**See also:** [features/windows-support.md](features/windows-support.md), [releases/v0.2.md](releases/v0.2.md)
