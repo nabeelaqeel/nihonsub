@@ -82,13 +82,7 @@ Press **Ctrl+C** to stop. A session summary is printed on exit.
 No setup needed. Uses PulseAudio monitor source, auto-detected.
 
 #### Windows
-Requires [VB-Cable](https://vb-audio.com/Cable/) (free virtual audio cable):
-1. Download and install VB-Cable
-2. Open **Sound Settings → Sound Control Panel → Playback** tab
-3. Set **CABLE Input** as your default output device
-4. Run nihonsub — it will auto-detect `CABLE Output` as the capture source
-
-All system audio (YouTube, VLC, games) will be routed through VB-Cable for capture.
+No setup needed. Uses WASAPI loopback to capture whatever is playing through your default audio output. Works out of the box.
 
 #### macOS
 Requires [BlackHole](https://github.com/ExistentialAudio/BlackHole) (free virtual audio driver):

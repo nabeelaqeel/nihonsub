@@ -45,9 +45,6 @@ def _list_wasapi_devices() -> list[str]:
 
 def _find_wasapi_loopback() -> str | None:
     devices = _list_wasapi_devices()
-    for d in devices:
-        if "cable" in d.lower():
-            return d
     if devices:
         return devices[0]
     return None
@@ -105,9 +102,8 @@ def _capture_device() -> tuple[str, list[str]]:
         if device is None:
             raise RuntimeError(
                 "No WASAPI loopback device found.\n"
-                "  Install VB-Cable (https://vb-audio.com/Cable/)\n"
-                "  Set your system audio output to 'CABLE Input'.\n"
-                "  Then restart nihonsub."
+                "  Ensure your sound card supports loopback recording.\n"
+                "  Or install VB-Cable (https://vb-audio.com/Cable/) as a fallback."
             )
         return "wasapi", ["-f", "wasapi", "-i", device]
 

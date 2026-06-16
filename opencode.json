@@ -1,9 +1,6 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "permission": {
-    "autoApprove": [
-      {
-        "glob": "/home/aqeel/MyStuff/project/nihonsub/**/*"
-      }
-    ]
+    "external_directory": "deny"
   }
 }

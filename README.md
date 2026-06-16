@@ -49,7 +49,7 @@ Press **Ctrl+C** to stop. Output saves automatically to `data/output/`.
 | File transcribe | ✅ | ✅ | ✅ |
 | Live listen | ✅ | ✅* | ✅* |
 
-*\* Requires a virtual audio cable: [VB-Cable](https://vb-audio.com/Cable/) on Windows, [BlackHole](https://github.com/ExistentialAudio/BlackHole) on macOS. See [docs/usage.md](docs/usage.md).*
+*\* macOS requires [BlackHole](https://github.com/ExistentialAudio/BlackHole). Windows and Linux work out of the box. See [docs/usage.md](docs/usage.md).*
 
 ## Documentation
 
