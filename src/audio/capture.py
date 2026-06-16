@@ -57,22 +57,27 @@ def _find_wasapi_ffmpeg() -> str | None:
 
 # ── Windows/macOS: sounddevice fallback ────────────────
 
-def _find_sounddevice_device() -> int | None:
+def _find_sounddevice_device() -> tuple[int, str] | None:
     try:
         import sounddevice as sd
     except ImportError:
         return None
 
-    candidates = []
+    priority_keywords = ["voicemeeter", "voice meeter", "vaio", "cable", "loopback", "stereo mix"]
+
+    candidates: list[tuple[int, str, bool]] = []
     for i, dev in enumerate(sd.query_devices()):
         if dev["max_input_channels"] > 0:
             name = dev["name"].lower()
-            if "cable" in name or "loopback" in name or "stereo mix" in name:
-                candidates.insert(0, i)
-            else:
-                candidates.append(i)
+            is_priority = any(kw in name for kw in priority_keywords)
+            candidates.append((i, dev["name"], is_priority))
 
-    return candidates[0] if candidates else None
+    if not candidates:
+        return None
+
+    priority = [c for c in candidates if c[2]]
+    chosen = priority[0] if priority else candidates[0]
+    return chosen[0], chosen[1]
 
 
 # ── macOS: AVFoundation ────────────────────────────────
@@ -146,9 +151,11 @@ def _capture_config() -> dict:
             if device:
                 return {"engine": "ffmpeg", "args": ["-f", "wasapi", "-i", device]}
 
-        idx = _find_sounddevice_device()
-        if idx is not None:
-            return {"engine": "sounddevice", "device_index": idx}
+        sd_dev = _find_sounddevice_device()
+        if sd_dev is not None:
+            idx, name = sd_dev
+            print(f"Using sounddevice capture device: {name} (index {idx})")
+            return {"engine": "sounddevice", "device_index": idx, "device_name": name}
 
         raise RuntimeError(
             "No audio capture device found.\n"
@@ -207,8 +214,10 @@ class AudioCapture:
         self._running = True
 
         if self._engine == "ffmpeg":
+            print(f"Capture engine: ffmpeg ({' '.join(self._ffmpeg_args)})")
             self._start_ffmpeg()
         else:
+            print(f"Capture engine: sounddevice (device {self._sd_device_index})")
             self._start_sounddevice()
 
     def _start_ffmpeg(self):

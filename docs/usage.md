@@ -84,11 +84,13 @@ No setup needed. Uses PulseAudio monitor source, auto-detected.
 #### Windows
 Auto-detects your capture device. First tries ffmpeg WASAPI loopback, then falls back to sounddevice (PortAudio). Works out of the box with most setups.
 
-**Troubleshooting**: If `ffmpeg -f wasapi` fails with `Unknown input format: 'wasapi'`, your ffmpeg binary was compiled without WASAPI input support. The tool will automatically fall back to sounddevice. To check available input devices:
+If you use **Bluetooth speakers** or other hardware without loopback support, use **VoiceMeeter** (virtual audio mixer) to route audio to both your speakers and a virtual capture device. See the [VoiceMeeter guide](voicemeeter.md) for detailed setup.
+
+**Troubleshooting**: If `ffmpeg -f wasapi` fails with `Unknown input format: 'wasapi'`, your ffmpeg binary was compiled without WASAPI input support. The tool automatically falls back to sounddevice. To check available input devices:
 ```bash
-python -c "import sounddevice as sd; print([d['name'] for d in sd.query_devices() if d['max_input_channels'] > 0])"
+python -c "import sounddevice as sd; [print(f'{i}: {d[\"name\"]}') for i, d in enumerate(sd.query_devices()) if d['max_input_channels'] > 0]"
 ```
-Loopback-capable devices (like CABLE Output, Stereo Mix) should appear. If none show up, install [VB-Cable](https://vb-audio.com/Cable/) to create a virtual loopback.
+Loopback-capable devices (like CABLE Output, VoiceMeeter Output, Stereo Mix) should appear. If none show up, install [VB-Cable](https://vb-audio.com/Cable/) or [VoiceMeeter](https://vb-audio.com/Voicemeeter/) to create a virtual loopback.
 
 #### macOS
 Requires [BlackHole](https://github.com/ExistentialAudio/BlackHole) (free virtual audio driver):

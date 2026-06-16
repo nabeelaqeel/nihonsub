@@ -15,10 +15,17 @@ class LiveDisplay:
         self.srt_path = Path(srt_path) if srt_path else None
         self.segments: list[dict] = []
         self.session_start = time.time()
+        self.rms_source: float = 0.0
 
         if self.srt_path:
             self.srt_path.parent.mkdir(parents=True, exist_ok=True)
             self.srt_path.write_text("", encoding="utf-8")
+
+    def _audio_meter(self, width: int = 12) -> str:
+        level = min(self.rms_source * 30, 1.0)
+        filled = int(level * width)
+        bar = "█" * filled + "░" * (width - filled)
+        return f"[{bar}] {level * 100:.0f}%"
 
     def _format_srt_timestamp(self, seconds: float) -> str:
         hours = int(seconds // 3600)
@@ -60,7 +67,7 @@ class LiveDisplay:
         )
 
         header_text = Text(
-            f"NihonSub — Listening  •  {elapsed_str}",
+            f"NihonSub — Listening  •  {elapsed_str}  •  Audio: {self._audio_meter()}",
             style="bold cyan",
         )
         layout["header"].update(
