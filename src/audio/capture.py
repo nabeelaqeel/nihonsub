@@ -9,6 +9,8 @@ def _os_name() -> str:
     return platform.system()
 
 
+# ── Linux: PulseAudio monitor ──────────────────────────
+
 def _find_pulse_monitor() -> str | None:
     result = subprocess.run(
         ["pactl", "list", "sources", "short"],
@@ -24,10 +26,12 @@ def _find_pulse_monitor() -> str | None:
     return None
 
 
+# ── Windows: ffmpeg WASAPI ─────────────────────────────
+
 def _list_wasapi_devices() -> list[str]:
     proc = subprocess.run(
         ["ffmpeg", "-f", "wasapi", "-list_devices", "true", "-i", "dummy"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, stderr=subprocess.PIPE,
     )
     devices = []
     in_wasapi = False
@@ -43,12 +47,35 @@ def _list_wasapi_devices() -> list[str]:
     return devices
 
 
-def _find_wasapi_loopback() -> str | None:
-    devices = _list_wasapi_devices()
-    if devices:
-        return devices[0]
-    return None
+def _find_wasapi_ffmpeg() -> str | None:
+    try:
+        devices = _list_wasapi_devices()
+        return devices[0] if devices else None
+    except Exception:
+        return None
 
+
+# ── Windows/macOS: sounddevice fallback ────────────────
+
+def _find_sounddevice_device() -> int | None:
+    try:
+        import sounddevice as sd
+    except ImportError:
+        return None
+
+    candidates = []
+    for i, dev in enumerate(sd.query_devices()):
+        if dev["max_input_channels"] > 0:
+            name = dev["name"].lower()
+            if "cable" in name or "loopback" in name or "stereo mix" in name:
+                candidates.insert(0, i)
+            else:
+                candidates.append(i)
+
+    return candidates[0] if candidates else None
+
+
+# ── macOS: AVFoundation ────────────────────────────────
 
 def _list_avfoundation_devices() -> list[dict]:
     proc = subprocess.run(
@@ -85,9 +112,25 @@ def _find_avfoundation_device() -> int | None:
     return None
 
 
-def _capture_device() -> tuple[str, list[str]]:
+# ── Platform detection ─────────────────────────────────
+
+def _detect_ffmpeg() -> bool:
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True)
+        return True
+    except FileNotFoundError:
+        return False
+
+
+def _capture_config() -> dict:
     os_name = _os_name()
+
     if os_name == "Linux":
+        if not _detect_ffmpeg():
+            raise RuntimeError(
+                "ffmpeg not found. Install it:\n"
+                "  sudo apt install ffmpeg"
+            )
         monitor = _find_pulse_monitor()
         if monitor is None:
             raise RuntimeError(
@@ -95,51 +138,84 @@ def _capture_device() -> tuple[str, list[str]]:
                 "  Ensure audio is playing so the monitor is active.\n"
                 "  Run: pactl list sources short | grep monitor"
             )
-        return "pulse", ["-f", "pulse", "-i", monitor]
+        return {"engine": "ffmpeg", "args": ["-f", "pulse", "-i", monitor]}
 
     elif os_name == "Windows":
-        device = _find_wasapi_loopback()
-        if device is None:
-            raise RuntimeError(
-                "No WASAPI loopback device found.\n"
-                "  Ensure your sound card supports loopback recording.\n"
-                "  Or install VB-Cable (https://vb-audio.com/Cable/) as a fallback."
-            )
-        return "wasapi", ["-f", "wasapi", "-i", device]
+        if _detect_ffmpeg():
+            device = _find_wasapi_ffmpeg()
+            if device:
+                return {"engine": "ffmpeg", "args": ["-f", "wasapi", "-i", device]}
+
+        idx = _find_sounddevice_device()
+        if idx is not None:
+            return {"engine": "sounddevice", "device_index": idx}
+
+        raise RuntimeError(
+            "No audio capture device found.\n"
+            "  Ensure ffmpeg is installed and on PATH, OR\n"
+            "  Install VB-Cable (https://vb-audio.com/Cable/)\n"
+            "  Set CABLE Input as your default playback device."
+        )
 
     elif os_name == "Darwin":
+        if not _detect_ffmpeg():
+            raise RuntimeError(
+                "ffmpeg not found. Install it:\n"
+                "  brew install ffmpeg"
+            )
         idx = _find_avfoundation_device()
         if idx is None:
             raise RuntimeError(
                 "No AVFoundation audio capture device found.\n"
-                "  Install BlackHole (https://github.com/ExistentialAudio/BlackHole)\n"
-                "  Set your system audio output to BlackHole.\n"
-                "  Then restart nihonsub."
+                "  Install BlackHole: brew install blackhole-2ch\n"
+                "  Then create a Multi-Output Device in Audio MIDI Setup."
             )
-        return "avfoundation", ["-f", "avfoundation", "-i", f"{idx}:none"]
+        return {"engine": "ffmpeg", "args": ["-f", "avfoundation", "-i", f"{idx}:none"]}
 
     else:
         raise RuntimeError(f"Unsupported platform: {os_name}")
 
 
+# ── AudioCapture class ─────────────────────────────────
+
 class AudioCapture:
     def __init__(self, target_sr: int = 16000):
         self.target_sr = target_sr
         self._callback = None
-        self._process: subprocess.Popen | None = None
+
+        self._engine: str | None = None
+        self._ffmpeg_process: subprocess.Popen | None = None
+        self._sd_stream = None
         self._thread: threading.Thread | None = None
         self._running = False
 
-        self._backend_name, self._ffmpeg_input_args = _capture_device()
+        cfg = _capture_config()
+        self._engine = cfg["engine"]
+        if self._engine == "ffmpeg":
+            self._ffmpeg_args = cfg["args"]
+        else:
+            self._sd_device_index = cfg["device_index"]
+            dev_info = self._get_sd_device_info()
+            self._sd_device_sr = int(dev_info["default_samplerate"])
+
+    def _get_sd_device_info(self):
+        import sounddevice as sd
+        return sd.query_devices(self._sd_device_index)
 
     def start(self, callback):
         self._callback = callback
         self._running = True
 
-        self._process = subprocess.Popen(
+        if self._engine == "ffmpeg":
+            self._start_ffmpeg()
+        else:
+            self._start_sounddevice()
+
+    def _start_ffmpeg(self):
+        self._ffmpeg_process = subprocess.Popen(
             [
                 "ffmpeg",
-                *self._ffmpeg_input_args,
+                *self._ffmpeg_args,
                 "-ac", "1",
                 "-ar", str(self.target_sr),
                 "-f", "f32le",
@@ -149,35 +225,56 @@ class AudioCapture:
             stderr=subprocess.DEVNULL,
             bufsize=4096,
         )
-
         self._thread = threading.Thread(target=self._read_loop, daemon=True)
         self._thread.start()
 
+    def _start_sounddevice(self):
+        import sounddevice as sd
+        self._sd_stream = sd.InputStream(
+            device=self._sd_device_index,
+            channels=2,
+            samplerate=self._sd_device_sr,
+            callback=self._sd_callback,
+        )
+        self._sd_stream.start()
+
     def stop(self):
         self._running = False
-        if self._process:
-            self._process.stdout.close()
-            self._process.terminate()
+        if self._engine == "ffmpeg":
+            self._stop_ffmpeg()
+        else:
+            self._stop_sounddevice()
+
+    def _stop_ffmpeg(self):
+        if self._ffmpeg_process:
+            self._ffmpeg_process.stdout.close()
+            self._ffmpeg_process.terminate()
             try:
-                self._process.wait(timeout=2)
+                self._ffmpeg_process.wait(timeout=2)
             except subprocess.TimeoutExpired:
-                self._process.kill()
-                self._process.wait()
-            self._process = None
+                self._ffmpeg_process.kill()
+                self._ffmpeg_process.wait()
+            self._ffmpeg_process = None
         self._thread = None
+
+    def _stop_sounddevice(self):
+        if self._sd_stream:
+            self._sd_stream.stop()
+            self._sd_stream.close()
+            self._sd_stream = None
 
     def _read_loop(self):
         BYTES_PER_FRAME = 4
         CHUNK_FRAMES = self.target_sr // 10
         CHUNK_SIZE = CHUNK_FRAMES * BYTES_PER_FRAME
 
-        assert self._process is not None
-        assert self._process.stdout is not None
+        assert self._ffmpeg_process is not None
+        assert self._ffmpeg_process.stdout is not None
 
         leftover = b""
         while self._running:
             try:
-                raw = self._process.stdout.read(CHUNK_SIZE)
+                raw = self._ffmpeg_process.stdout.read(CHUNK_SIZE)
                 if not raw:
                     break
                 data = leftover + raw
@@ -190,3 +287,17 @@ class AudioCapture:
                         self._callback(chunk)
             except (BrokenPipeError, OSError, ValueError):
                 break
+
+    def _sd_callback(self, indata, frames, time_info, status):
+        if status:
+            print(f"Audio status: {status}")
+        if not self._running:
+            return
+        mono = indata.mean(axis=1).astype(np.float32)
+        if self._sd_device_sr != self.target_sr:
+            ratio = self.target_sr / self._sd_device_sr
+            new_len = int(len(mono) * ratio)
+            indices = np.linspace(0, len(mono) - 1, new_len)
+            mono = np.interp(indices, np.arange(len(mono)), mono).astype(np.float32)
+        if self._callback:
+            self._callback(mono)
