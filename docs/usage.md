@@ -1,0 +1,87 @@
+# Usage
+
+## Prerequisites
+
+- Python 3.11+
+- `ffmpeg` installed and on PATH
+
+## Setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## File Transcribe
+
+Convert a video or audio file to Japanese subtitles.
+
+```bash
+# Basic usage
+python -m src transcribe data/input/episode1.mp4 -o data/output/episode1.srt
+
+# Specify a different model
+python -m src transcribe episode.mp4 --model_size small
+
+# Specify subtitle format
+python -m src transcribe episode.mp4 --subtitle_format vtt
+
+# All options
+python -m src transcribe --help
+```
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|---|---|---|---|
+| `input_path` | str | (required) | Path to audio/video file |
+| `--output` / `-o` | str | auto | Output subtitle path (.srt/.vtt) |
+| `--model_size` | str | `medium` | Whisper model: tiny/base/small/medium/large-v3 |
+| `--subtitle_format` | str | `srt` | Output format: `srt` or `vtt` |
+
+## Live Listen
+
+Capture system audio in real-time and transcribe as it plays.
+
+```bash
+# Start listening (auto-named SRT file in data/output/)
+python -m src listen
+
+# Specify output SRT path
+python -m src listen -o live_subtitles.srt
+
+# Use a faster model for lower latency
+python -m src listen --model_size small
+
+# All options
+python -m src listen --help
+```
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|---|---|---|---|
+| `--output` / `-o` | str | auto | Output SRT file path |
+| `--model_size` | str | `small` | Whisper model for live mode |
+
+### How it works
+
+1. Detects the PipeWire/PulseAudio monitor source (system audio loopback)
+2. Spawns `ffmpeg` to capture 16kHz mono f32le audio from the monitor
+3. Runs `silero-vad` on the stream to detect speech segments
+4. Transcribes each segment with `faster-whisper` in a background thread
+5. Displays results in a live-rich terminal window
+6. Appends completed segments to the `.srt` file in real-time
+
+Press **Ctrl+C** to stop. A session summary is printed on exit.
+
+## .env Configuration
+
+Copy `.env.example` to `.env` and customize:
+
+```bash
+cp .env.example .env
+```
+
+See [configuration.md](configuration.md) for all options.

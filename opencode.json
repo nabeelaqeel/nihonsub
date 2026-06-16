@@ -1,0 +1,9 @@
+{
+  "permission": {
+    "autoApprove": [
+      {
+        "glob": "/home/aqeel/MyStuff/project/nihonsub/**/*"
+      }
+    ]
+  }
+}
