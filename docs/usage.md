@@ -67,14 +67,36 @@ python -m src listen --help
 
 ### How it works
 
-1. Detects the PipeWire/PulseAudio monitor source (system audio loopback)
-2. Spawns `ffmpeg` to capture 16kHz mono f32le audio from the monitor
-3. Runs `silero-vad` on the stream to detect speech segments
-4. Transcribes each segment with `faster-whisper` in a background thread
-5. Displays results in a live-rich terminal window
-6. Appends completed segments to the `.srt` file in real-time
+1. **Detects** your system's audio loopback device (platform-specific)
+2. **Spawns** `ffmpeg` to capture 16kHz mono f32le audio from the loopback
+3. **Runs** `silero-vad` on the stream to detect speech segments
+4. **Transcribes** each segment with `faster-whisper` in a background thread
+5. **Displays** results in a live rich terminal window
+6. **Appends** completed segments to the `.srt` file in real-time
 
 Press **Ctrl+C** to stop. A session summary is printed on exit.
+
+### Platform Setup
+
+#### Linux
+No setup needed. Uses PulseAudio monitor source, auto-detected.
+
+#### Windows
+Requires [VB-Cable](https://vb-audio.com/Cable/) (free virtual audio cable):
+1. Download and install VB-Cable
+2. Open **Sound Settings → Sound Control Panel → Playback** tab
+3. Set **CABLE Input** as your default output device
+4. Run nihonsub — it will auto-detect `CABLE Output` as the capture source
+
+All system audio (YouTube, VLC, games) will be routed through VB-Cable for capture.
+
+#### macOS
+Requires [BlackHole](https://github.com/ExistentialAudio/BlackHole) (free virtual audio driver):
+1. Download and install BlackHole (e.g. `brew install blackhole-2ch`)
+2. Open **Audio MIDI Setup** → create a Multi-Output Device
+3. Add both your speakers and BlackHole to the Multi-Output Device
+4. Set the Multi-Output Device as your system output
+5. Run nihonsub — it will auto-detect BlackHole as the capture source
 
 ## .env Configuration
 
