@@ -82,7 +82,13 @@ Press **Ctrl+C** to stop. A session summary is printed on exit.
 No setup needed. Uses PulseAudio monitor source, auto-detected.
 
 #### Windows
-No setup needed. Uses WASAPI loopback to capture whatever is playing through your default audio output. Works out of the box.
+Auto-detects your capture device. First tries ffmpeg WASAPI loopback, then falls back to sounddevice (PortAudio). Works out of the box with most setups.
+
+**Troubleshooting**: If `ffmpeg -f wasapi` fails with `Unknown input format: 'wasapi'`, your ffmpeg binary was compiled without WASAPI input support. The tool will automatically fall back to sounddevice. To check available input devices:
+```bash
+python -c "import sounddevice as sd; print([d['name'] for d in sd.query_devices() if d['max_input_channels'] > 0])"
+```
+Loopback-capable devices (like CABLE Output, Stereo Mix) should appear. If none show up, install [VB-Cable](https://vb-audio.com/Cable/) to create a virtual loopback.
 
 #### macOS
 Requires [BlackHole](https://github.com/ExistentialAudio/BlackHole) (free virtual audio driver):
