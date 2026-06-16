@@ -27,7 +27,7 @@ def _find_pulse_monitor() -> str | None:
 def _list_wasapi_devices() -> list[str]:
     proc = subprocess.run(
         ["ffmpeg", "-f", "wasapi", "-list_devices", "true", "-i", "dummy"],
-        capture_output=True, text=True, stderr=subprocess.PIPE,
+        capture_output=True, text=True,
     )
     devices = []
     in_wasapi = False
@@ -53,7 +53,7 @@ def _find_wasapi_loopback() -> str | None:
 def _list_avfoundation_devices() -> list[dict]:
     proc = subprocess.run(
         ["ffmpeg", "-f", "avfoundation", "-list_devices", "true", "-i", ""],
-        capture_output=True, text=True, stderr=subprocess.PIPE,
+        capture_output=True, text=True,
     )
     devices = []
     current_section = None
