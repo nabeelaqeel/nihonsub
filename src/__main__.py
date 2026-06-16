@@ -104,6 +104,7 @@ def listen_command(
             screen=True,
         ) as live:
             while True:
+                display.rms_source = stream.current_rms
                 while True:
                     try:
                         seg = stream.display_queue.get_nowait()

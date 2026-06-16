@@ -47,9 +47,9 @@ Press **Ctrl+C** to stop. Output saves automatically to `data/output/`.
 | Feature | Linux | macOS | Windows |
 |---|---|---|---|
 | File transcribe | ✅ | ✅ | ✅ |
-| Live listen | ✅ | ❌* | ❌* |
+| Live listen | ✅ | ✅* | ✅* |
 
-*\* Live mode currently uses PulseAudio (Linux only). macOS/Windows support planned.*
+*\* macOS requires [BlackHole](https://github.com/ExistentialAudio/BlackHole). Windows and Linux work out of the box. See [docs/usage.md](docs/usage.md).*
 
 ## Documentation
 

@@ -2,15 +2,9 @@
 
 Transcribe Japanese audio (anime episodes, class recordings) into Japanese text subtitles — fully local, no cloud APIs.
 
-## Features
-
-- **File transcribe** — Batch convert MP4/MKV/MP3/WAV → .srt or .vtt
-- **Live listen** — Capture system audio in real-time and transcribe as it plays (YouTube, VLC, anime player, Zoom classes)
-
 ## Quick Start
 
 ```bash
-# Prerequisites: Python 3.11+, ffmpeg
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 
@@ -21,9 +15,39 @@ python -m src transcribe episode.mp4 -o subtitles.srt
 python -m src listen
 ```
 
-## Project Status
+Requires: Python 3.11+, ffmpeg on PATH.
 
-**v0.1** — MVP. File transcription and live listening both functional. See [docs/usage.md](usage.md) for detailed usage.
+## Features
+
+| Feature | Description | Docs |
+|---------|-------------|------|
+| **File Transcribe** | Batch convert video/audio → .srt / .vtt | [docs](features/file-transcribe.md) |
+| **Live Listen** | Real-time system audio capture + transcription | [docs](features/live-listen.md) |
+| **Windows Support** | WASAPI + sounddevice, VoiceMeeter | [docs](features/windows-support.md) |
+
+## Platform Support
+
+| Platform | Live Capture | Notes |
+|----------|-------------|-------|
+| Linux | ✅ PulseAudio monitor | Auto-detected |
+| Windows | ✅ WASAPI / sounddevice | VoiceMeeter for Bluetooth speakers |
+| macOS | ✅ AVFoundation | Requires BlackHole |
+
+## Releases
+
+| Version | Branch | Highlights |
+|---------|--------|------------|
+| [v0.1](releases/v0.1.md) | `main` | File transcribe + Linux live listen (MVP) |
+| [v0.2](releases/v0.2.md) | `feat/windows-support` | Windows/macOS support, VoiceMeeter, audio meter |
+
+## Documentation
+
+- [Usage](usage.md) — CLI commands and arguments
+- [Architecture](architecture.md) — system design and data flows
+- [Configuration](configuration.md) — `.env` reference
+- [VoiceMeeter Guide](voicemeeter.md) — Windows Bluetooth speaker setup
+- [Development](development.md) — contributing and conventions
+- [Lessons Learned](lessons-learned.md) — engineering notes
 
 ## License
 
