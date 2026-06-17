@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     vad_threshold: float = 0.5
     vad_min_speech_duration_ms: int = 250
     vad_min_silence_duration_ms: int = 500
+    mode: str = "time"
+    interval_sec: float = 15.0
+    silence_duration_sec: float = 0.64
 
     model_config = SettingsConfigDict(env_prefix="", env_file=".env", extra="ignore")
 

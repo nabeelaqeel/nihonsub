@@ -76,6 +76,9 @@ def transcribe_command(
 def listen_command(
     output: str | None = None,
     model_size: str = "small",
+    mode: str | None = None,
+    interval: float | None = None,
+    silence_duration: float | None = None,
 ):
     if output:
         srt_path = Path(output)
@@ -83,10 +86,23 @@ def listen_command(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         srt_path = Path(f"data/output/live_{timestamp}.srt")
 
-    print(f"Initializing live listening (model: {model_size})...")
+    mode = mode or settings.mode
+    interval = interval or settings.interval_sec
+    silence_duration = silence_duration or settings.silence_duration_sec
+
+    print(f"Initializing live listening (model: {model_size}, mode: {mode})...")
+    if mode == "time":
+        print(f"  Interval: {interval}s")
+    else:
+        print(f"  Silence duration: {silence_duration}s")
     print(f"Output SRT: {srt_path.resolve()}")
 
-    stream = LiveStream(model_size=model_size)
+    stream = LiveStream(
+        model_size=model_size,
+        mode=mode,
+        interval_sec=interval,
+        silence_duration_sec=silence_duration,
+    )
     stream.start()
 
     display = LiveDisplay(srt_path)
@@ -121,10 +137,57 @@ def listen_command(
         print(f"Session ended. SRT saved to: {srt_path.resolve()}")
 
 
+def captions_command(
+    model_size: str = "small",
+    mode: str | None = None,
+    interval: float | None = None,
+    silence_duration: float | None = None,
+):
+    mode = mode or settings.mode
+    interval = interval or settings.interval_sec
+    silence_duration = silence_duration or settings.silence_duration_sec
+
+    print(f"Starting Live Captions (model: {model_size}, mode: {mode})...")
+    if mode == "time":
+        print(f"  Interval: {interval}s")
+
+    stream = LiveStream(
+        model_size=model_size,
+        mode=mode,
+        interval_sec=interval,
+        silence_duration_sec=silence_duration,
+    )
+    stream.start()
+
+    capture = AudioCapture()
+    capture.start(callback=lambda chunk: stream.push_audio(chunk))
+
+    print("Opening captions window... (Ctrl+C to stop)")
+
+    try:
+        from src.ui.gtk_window import CaptionWindow
+    except ImportError as e:
+        print(f"Error: GTK not available ({e})")
+        print("Install: sudo apt install python3-gi gir1.2-gtk-3.0")
+        capture.stop()
+        stream.stop()
+        return
+
+    try:
+        win = CaptionWindow(stream.display_queue, on_close=lambda: None)
+        win.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        capture.stop()
+        stream.stop()
+
+
 def main():
     fire.Fire({
         "transcribe": transcribe_command,
         "listen": listen_command,
+        "captions": captions_command,
     })
 
 
