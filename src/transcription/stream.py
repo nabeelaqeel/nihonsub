@@ -57,9 +57,9 @@ class LiveStream:
         while self.running:
             try:
                 chunk = self.vad_queue.get(timeout=0.1)
-                frame_buffer = np.concatenate([frame_buffer, chunk])
 
                 if self.mode == "vad":
+                    frame_buffer = np.concatenate([frame_buffer, chunk])
                     while len(frame_buffer) >= FRAME_SIZE:
                         frame = frame_buffer[:FRAME_SIZE].copy()
                         frame_buffer = frame_buffer[FRAME_SIZE:]
@@ -67,10 +67,9 @@ class LiveStream:
                         if seg is not None:
                             self.transcribe_queue.put(seg)
                 else:
-                    seg = self.segmenter.add_audio(frame_buffer)
+                    seg = self.segmenter.add_audio(chunk)
                     if seg is not None:
                         self.transcribe_queue.put(seg)
-                        frame_buffer = np.array([], dtype=np.float32)
             except queue.Empty:
                 continue
             except Exception as e:

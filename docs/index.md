@@ -13,6 +13,9 @@ python -m src transcribe episode.mp4 -o subtitles.srt
 
 # Live mode (captures audio playing on your laptop)
 python -m src listen
+
+# Live captions window (Linux only)
+python -m src captions
 ```
 
 Requires: Python 3.11+, ffmpeg on PATH.
@@ -23,15 +26,16 @@ Requires: Python 3.11+, ffmpeg on PATH.
 |---------|-------------|------|
 | **File Transcribe** | Batch convert video/audio → .srt / .vtt | [docs](features/file-transcribe.md) |
 | **Live Listen** | Real-time system audio capture + transcription | [docs](features/live-listen.md) |
+| **Live Captions** | Always-on-top GTK3 captions window (Linux) | [docs](features/live-listen.md) |
 | **Windows Support** | WASAPI + sounddevice, VoiceMeeter | [docs](features/windows-support.md) |
 
 ## Platform Support
 
-| Platform | Live Capture | Notes |
-|----------|-------------|-------|
-| Linux | ✅ PulseAudio monitor | Auto-detected |
-| Windows | ✅ WASAPI / sounddevice | VoiceMeeter for Bluetooth speakers |
-| macOS | ✅ AVFoundation | Requires BlackHole |
+| Platform | Live Capture | Live Captions (GTK) | Notes |
+|----------|-------------|---------------------|-------|
+| Linux | ✅ PulseAudio monitor | ✅ | Auto-detected |
+| Windows | ✅ WASAPI / sounddevice | ❌ | VoiceMeeter for Bluetooth speakers |
+| macOS | ✅ AVFoundation | ❌ | Requires BlackHole |
 
 ## Releases
 
@@ -39,6 +43,7 @@ Requires: Python 3.11+, ffmpeg on PATH.
 |---------|--------|------------|
 | [v0.1](releases/v0.1.md) | `main` | File transcribe + Linux live listen (MVP) |
 | [v0.2](releases/v0.2.md) | `feat/windows-support` | Windows/macOS support, VoiceMeeter, audio meter |
+| [v0.3](releases/v0.3.md) | `feat/live-captions-ui` | GTK live captions, time-based segmentation, `--interval`/`--mode` flags |
 
 ## Documentation
 

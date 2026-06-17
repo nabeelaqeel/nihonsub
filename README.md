@@ -6,6 +6,7 @@ Transcribe Japanese audio (anime, class recordings, YouTube) into Japanese text 
 
 - **File transcribe** — batch audio/video → `.srt` / `.vtt` subtitles
 - **Live listen** — capture system audio in real-time, transcribe as it plays
+- **Live captions** — always-on-top GTK3 captions window (Linux)
 - **Fully offline** — faster-whisper runs locally, no internet needed
 - **Japanese-optimized** — default model tuned for Japanese speech
 - **CLI-first** — simple commands, composable with other tools
@@ -37,17 +38,35 @@ python -m src transcribe episode.mp4 -o subtitles.srt
 ### Live listen (capture system audio)
 
 ```bash
+# Default: 15-second intervals
 python -m src listen
+
+# Faster feedback: 5-second intervals
+python -m src listen --interval 5
+
+# Speech-bounded mode (VAD)
+python -m src listen --mode vad
 ```
 
 Press **Ctrl+C** to stop. Output saves automatically to `data/output/`.
 
+### Live captions (Linux only)
+
+```bash
+# Always-on-top GTK captions window
+python -m src captions
+
+# Custom interval
+python -m src captions --interval 5
+```
+
 ## Platform Support
 
 | Feature | Linux | macOS | Windows |
-|---|---|---|---|
+|---|---|---|---|---|
 | File transcribe | ✅ | ✅ | ✅ |
 | Live listen | ✅ | ✅* | ✅* |
+| Live captions (GTK) | ✅ | ❌ | ❌ |
 
 *\* macOS requires [BlackHole](https://github.com/ExistentialAudio/BlackHole). Windows and Linux work out of the box. See [docs/usage.md](docs/usage.md).*
 

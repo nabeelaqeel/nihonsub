@@ -45,8 +45,14 @@ python -m src transcribe --help
 Capture system audio in real-time and transcribe as it plays.
 
 ```bash
-# Start listening (auto-named SRT file in data/output/)
+# Default: 15-second interval segments (time mode)
 python -m src listen
+
+# Faster feedback: 5-second intervals
+python -m src listen --interval 5
+
+# Speech-bounded segments (VAD mode)
+python -m src listen --mode vad
 
 # Specify output SRT path
 python -m src listen -o live_subtitles.srt
@@ -64,12 +70,15 @@ python -m src listen --help
 |---|---|---|---|
 | `--output` / `-o` | str | auto | Output SRT file path |
 | `--model_size` | str | `small` | Whisper model for live mode |
+| `--mode` | str | `time` | Segmentation mode: `time` (fixed-interval) or `vad` (speech-bounded) |
+| `--interval` | float | `15.0` | Seconds per segment in time mode |
+| `--silence_duration` | float | `0.64` | Seconds of silence to end a segment in VAD mode |
 
 ### How it works
 
 1. **Detects** your system's audio loopback device (platform-specific)
 2. **Captures** 16kHz mono f32le audio (ffmpeg or sounddevice depending on platform)
-3. **Runs** `silero-vad` on the stream to detect speech segments
+3. **Segments** audio into chunks — either fixed **time intervals** (default) or **speech-bounded** via silero-vad (`--mode vad`)
 4. **Transcribes** each segment with `faster-whisper` in a background thread
 5. **Displays** results in a live rich terminal window with audio level meter
 6. **Appends** completed segments to the `.srt` file in real-time
