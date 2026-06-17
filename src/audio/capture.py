@@ -1,7 +1,7 @@
-import os
 import platform
 import subprocess
 import threading
+import re
 import numpy as np
 
 
@@ -31,7 +31,7 @@ def _find_pulse_monitor() -> str | None:
 def _list_wasapi_devices() -> list[str]:
     proc = subprocess.run(
         ["ffmpeg", "-f", "wasapi", "-list_devices", "true", "-i", "dummy"],
-        capture_output=True, text=True, stderr=subprocess.PIPE,
+        capture_output=True, text=True,
     )
     devices = []
     in_wasapi = False
@@ -40,7 +40,6 @@ def _list_wasapi_devices() -> list[str]:
             in_wasapi = True
             continue
         if in_wasapi and '"' in line:
-            import re
             m = re.search(r'"([^"]+)"', line)
             if m and "(loopback)" in line.lower():
                 devices.append(m.group(1))
@@ -256,13 +255,13 @@ class AudioCapture:
 
     def _stop_ffmpeg(self):
         if self._ffmpeg_process:
-            self._ffmpeg_process.stdout.close()
             self._ffmpeg_process.terminate()
             try:
                 self._ffmpeg_process.wait(timeout=2)
             except subprocess.TimeoutExpired:
                 self._ffmpeg_process.kill()
                 self._ffmpeg_process.wait()
+            self._ffmpeg_process.stdout.close()
             self._ffmpeg_process = None
         self._thread = None
 

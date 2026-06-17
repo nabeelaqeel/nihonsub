@@ -44,6 +44,8 @@ class LiveDisplay:
             self._append_srt(seg)
 
     def _append_srt(self, seg: dict):
+        if seg.get("id", 0) < 0:
+            return
         idx = len(self.segments)
         start_ts = self._format_srt_timestamp(seg["start"] - self.session_start)
         end_ts = self._format_srt_timestamp(seg["end"] - self.session_start)
